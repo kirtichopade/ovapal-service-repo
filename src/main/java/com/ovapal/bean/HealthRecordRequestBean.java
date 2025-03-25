@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @Builder
 public class HealthRecordRequestBean {
     private Long userId;
+    private Long healthId;
     private LocalDate recordDate;
     private Double weight;
     private Double height;

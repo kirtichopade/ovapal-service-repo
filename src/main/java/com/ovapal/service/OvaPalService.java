@@ -90,7 +90,7 @@ public class OvaPalService {
         
         // Save the user
         User savedUser = userRepository.save(user);
-        logger.info("User created successfully with ID: {}", savedUser.getId());
+        logger.info("User created successfully with ID: {}", savedUser.getUserid());
         
         // Map entity to response bean
         return mapUserToResponseBean(savedUser);
@@ -163,7 +163,7 @@ public class OvaPalService {
         }
         
         HealthRecord savedRecord = healthRecordRepository.save(healthRecord);
-        logger.info("Health record saved with ID: {}", savedRecord.getId());
+        logger.info("Health record saved with ID: {}", savedRecord.getHealthId());
         
         // Map entity to response bean
         return mapHealthRecordToResponseBean(savedRecord);
@@ -207,7 +207,7 @@ public class OvaPalService {
         validatePeriodRecord(periodRecord);
         
         PeriodRecord savedRecord = periodRecordRepository.save(periodRecord);
-        logger.info("Period record saved with ID: {}", savedRecord.getId());
+        logger.info("Period record saved with ID: {}", savedRecord.getPeriodrecid());
         
         // Map entity to response bean
         return mapPeriodRecordToResponseBean(savedRecord);
@@ -231,7 +231,7 @@ public class OvaPalService {
         
         // Map bean to entity
         PeriodRecord periodRecord = PeriodRecord.builder()
-                .id(periodRecId) // Set the ID to ensure we're updating not creating
+                .periodrecid(periodRecId) // Set the ID to ensure we're updating not creating
                 .userId(periodRecordRequestBean.getUserId())
                 .startDate(periodRecordRequestBean.getStartDate())
                 .endDate(periodRecordRequestBean.getEndDate())
@@ -245,7 +245,7 @@ public class OvaPalService {
         validatePeriodRecord(periodRecord);
         
         PeriodRecord updatedRecord = periodRecordRepository.save(periodRecord);
-        logger.info("Period record updated with ID: {}", updatedRecord.getId());
+        logger.info("Period record updated with ID: {}", updatedRecord.getPeriodrecid());
         
         // Map entity to response bean
         return mapPeriodRecordToResponseBean(updatedRecord);
@@ -301,7 +301,7 @@ public class OvaPalService {
         }
         
         Reminder savedReminder = reminderRepository.save(reminder);
-        logger.info("Reminder saved with ID: {}", savedReminder.getId());
+        logger.info("Reminder saved with ID: {}", savedReminder.getReminderid());
         
         // Map entity to response bean
         return mapReminderToResponseBean(savedReminder);
@@ -318,7 +318,7 @@ public class OvaPalService {
         // Map bean to entity
         Medication medication = Medication.builder()
                 .userId(medicationRequestBean.getUserId())
-                .medicinename(medicationRequestBean.getMedicinename())
+                .medicine(medicationRequestBean.getMedicine())
                 .dosage(medicationRequestBean.getDosage())
                 .frequency(medicationRequestBean.getFrequency())
                 .startDate(medicationRequestBean.getStartDate())
@@ -330,7 +330,7 @@ public class OvaPalService {
         validateMedication(medication);
         
         Medication savedMedication = medicationRepository.save(medication);
-        logger.info("Medication saved with ID: {}", savedMedication.getId());
+        logger.info("Medication saved with ID: {}", savedMedication.getMedicineid());
         
         // Map entity to response bean
         return mapMedicationToResponseBean(savedMedication);
@@ -425,7 +425,7 @@ public class OvaPalService {
     }
     
     private void validateMedication(Medication medication) {
-        if (medication.getMedicinename() == null || medication.getMedicinename().trim().isEmpty()) {
+        if (medication.getMedicine() == null || medication.getMedicine().trim().isEmpty()) {
             throw new InvalidOperationException("Medication name is required");
         }
         
@@ -449,7 +449,7 @@ public class OvaPalService {
     // Mapper methods
     private UserResponseBean mapUserToResponseBean(User user) {
         return UserResponseBean.builder()
-                .id(user.getId())
+                .userId(user.getUserid())
                 .name(user.getName())
                 .email(user.getEmail())
                 .age(user.getAge())
@@ -458,7 +458,7 @@ public class OvaPalService {
     
     private HealthRecordResponseBean mapHealthRecordToResponseBean(HealthRecord healthRecord) {
         return HealthRecordResponseBean.builder()
-                .id(healthRecord.getId())
+                .healthId(healthRecord.getHealthId())
                 .userId(healthRecord.getUserId())
                 .recordDate(LocalDate.now())
                 .weight(healthRecord.getWeight())
@@ -473,7 +473,7 @@ public class OvaPalService {
     
     private PeriodRecordResponseBean mapPeriodRecordToResponseBean(PeriodRecord periodRecord) {
         return PeriodRecordResponseBean.builder()
-                .id(periodRecord.getId())
+                .periodRecId(periodRecord.getPeriodrecid())
                 .userId(periodRecord.getUserId())
                 .startDate(periodRecord.getStartDate())
                 .endDate(periodRecord.getEndDate())
@@ -486,7 +486,7 @@ public class OvaPalService {
     
     private ReminderResponseBean mapReminderToResponseBean(Reminder reminder) {
         return ReminderResponseBean.builder()
-                .id(reminder.getId())
+                .reminderId(reminder.getReminderid())
                 .userId(reminder.getUserId())
                 .title(reminder.getTitle())
                 .description(reminder.getDescription())
@@ -500,9 +500,9 @@ public class OvaPalService {
     
     private MedicationResponseBean mapMedicationToResponseBean(Medication medication) {
         return MedicationResponseBean.builder()
-                .medicationid(medication.getId())
+                .medicationId(medication.getMedicineid())
                 .userId(medication.getUserId())
-                .medicinename(medication.getMedicinename())
+                .medicine(medication.getMedicine())
                 .dosage(medication.getDosage())
                 .frequency(medication.getFrequency())
                 .startDate(medication.getStartDate())

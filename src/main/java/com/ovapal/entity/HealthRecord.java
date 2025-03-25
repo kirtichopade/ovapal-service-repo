@@ -17,7 +17,9 @@ public class HealthRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "healthid")
+    private Long healthId;
+    @Column(name = "userid")
     private Long userId;
     private LocalDate recordDate;
     private Double weight;

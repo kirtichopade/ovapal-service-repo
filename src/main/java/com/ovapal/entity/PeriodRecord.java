@@ -13,7 +13,7 @@ import java.time.LocalDate;
 public class PeriodRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long periodrecid;
     private Long userId;
     private LocalDate startDate;
     private LocalDate endDate;

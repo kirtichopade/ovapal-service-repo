@@ -14,7 +14,7 @@ import java.time.LocalTime;
 public class Reminder {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long reminderid;
     private Long userId;
     private String title;
     private String description;

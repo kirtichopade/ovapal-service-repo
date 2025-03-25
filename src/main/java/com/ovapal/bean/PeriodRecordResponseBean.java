@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class PeriodRecordResponseBean {
-    private Long id;
+    private Long periodRecId;
     private Long userId;
     private LocalDate startDate;
     private LocalDate endDate;

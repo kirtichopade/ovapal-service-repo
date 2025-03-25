@@ -12,7 +12,7 @@ import java.time.LocalTime;
 @AllArgsConstructor
 @Builder
 public class ReminderResponseBean {
-    private Long id;
+    private Long reminderId;
     private Long userId;
     private String title;
     private String description;

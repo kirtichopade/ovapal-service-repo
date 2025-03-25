@@ -23,20 +23,20 @@ public class GlobalExceptionHandler {
             InvalidOperationException ex, WebRequest request) {
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, request);
     }
-    
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Object> handleAuthenticationException(
             AuthenticationException ex, WebRequest request) {
         return buildErrorResponse(ex, HttpStatus.UNAUTHORIZED, request);
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGlobalException(
             Exception ex, WebRequest request) {
         return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
-    
-    private ResponseEntity<Object> buildErrorResponse(
+
+    ResponseEntity<Object> buildErrorResponse(
             Exception ex, HttpStatus status, WebRequest request) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
@@ -44,7 +44,7 @@ public class GlobalExceptionHandler {
         body.put("error", status.getReasonPhrase());
         body.put("message", ex.getMessage());
         body.put("path", request.getDescription(false));
-        
+
         return new ResponseEntity<>(body, status);
     }
-} 
+}

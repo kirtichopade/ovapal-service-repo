@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class UserResponseBean {
-    private Long id;
+    private Long userId;
     private String name;
     private String email;
     // password is deliberately excluded from response

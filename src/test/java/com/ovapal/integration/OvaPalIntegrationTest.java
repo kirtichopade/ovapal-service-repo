@@ -59,7 +59,7 @@ public class OvaPalIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", notNullValue()))
+                .andExpect(jsonPath("$.userId", notNullValue()))
                 .andExpect(jsonPath("$.name", is("Integration Test User")))
                 .andExpect(jsonPath("$.email", is("integration-test@example.com")))
                 .andExpect(jsonPath("$.age", is(30)));

@@ -15,7 +15,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -66,7 +65,7 @@ public class OvaPalServiceTest {
     void setUp() {
         // Set up test user
         testUser = User.builder()
-                .id(1L)
+                .userid(1L)
                 .name("Test User")
                 .email("test@example.com")
                 .password("hashedPassword")
@@ -87,7 +86,7 @@ public class OvaPalServiceTest {
 
         // Set up test health record
         testHealthRecord = HealthRecord.builder()
-                .id(1L)
+                .healthId(1L)
                 .userId(1L)
                 .recordDate(LocalDate.now())
                 .weight(60.5)
@@ -113,7 +112,7 @@ public class OvaPalServiceTest {
 
         // Set up test period record
         testPeriodRecord = PeriodRecord.builder()
-                .id(1L)
+                .periodrecid(1L)
                 .userId(1L)
                 .startDate(LocalDate.now().minusDays(5))
                 .endDate(LocalDate.now())
@@ -135,7 +134,7 @@ public class OvaPalServiceTest {
 
         // Set up test reminder
         testReminder = Reminder.builder()
-                .id(1L)
+                .reminderid(1L)
                 .userId(1L)
                 .title("Medication Reminder")
                 .description("Take pain medication")
@@ -159,9 +158,9 @@ public class OvaPalServiceTest {
 
         // Set up test medication
         testMedication = Medication.builder()
-                .id(1L)
+                .medicineid(1L)
                 .userId(1L)
-                .medicinename("Ibuprofen")
+                .medicine("Ibuprofen")
                 .dosage("200mg")
                 .frequency("Twice daily")
                 .startDate(LocalDate.now())
@@ -171,7 +170,7 @@ public class OvaPalServiceTest {
 
         medicationRequestBean = MedicationRequestBean.builder()
                 .userId(1L)
-                .medicinename("Ibuprofen")
+                .medicine("Ibuprofen")
                 .dosage("200mg")
                 .frequency("Twice daily")
                 .startDate(LocalDate.now())
@@ -192,7 +191,7 @@ public class OvaPalServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(testUser.getId(), result.getId());
+        assertEquals(testUser.getUserid(), result.getUserId());
         assertEquals(testUser.getName(), result.getName());
         assertEquals(testUser.getEmail(), result.getEmail());
         
@@ -232,7 +231,7 @@ public class OvaPalServiceTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(testUser.getId(), result.getId());
+        assertEquals(testUser.getUserid(), result.getUserId());
         assertEquals(testUser.getName(), result.getName());
         assertEquals(testUser.getEmail(), result.getEmail());
         
@@ -268,7 +267,7 @@ public class OvaPalServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(testHealthRecord.getId(), result.get(0).getId());
+        assertEquals(testHealthRecord.getHealthId(), result.get(0).getHealthId());
         assertEquals(testHealthRecord.getUserId(), result.get(0).getUserId());
         assertEquals(testHealthRecord.getWeight(), result.get(0).getWeight());
         

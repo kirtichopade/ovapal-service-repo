@@ -12,6 +12,7 @@ import java.time.LocalDate;
 @Builder
 public class PeriodRecordRequestBean {
     private Long userId;
+    private Long periodRecId;
     private LocalDate startDate;
     private LocalDate endDate;
     private String flow;  // Light, Medium, Heavy

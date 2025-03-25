@@ -27,7 +27,7 @@ public class TestUtil {
      */
     public static User createTestUser() {
         return User.builder()
-                .id(random.nextLong(1000))
+                .userid(random.nextLong(1000))
                 .name("Test User " + random.nextInt(1000))
                 .email("test" + random.nextInt(1000) + "@example.com")
                 .password("password" + random.nextInt(1000))
@@ -55,7 +55,7 @@ public class TestUtil {
      */
     public static HealthRecord createTestHealthRecord(Long userId) {
         return HealthRecord.builder()
-                .id(random.nextLong(1000))
+                .healthId(random.nextLong(1000))
                 .userId(userId)
                 .recordDate(LocalDate.now().minusDays(random.nextInt(30)))
                 .weight(50 + random.nextDouble() * 50)
@@ -76,7 +76,7 @@ public class TestUtil {
     public static PeriodRecord createTestPeriodRecord(Long userId) {
         LocalDate startDate = LocalDate.now().minusDays(random.nextInt(30));
         return PeriodRecord.builder()
-                .id(random.nextLong(1000))
+                .periodrecid(random.nextLong(1000))
                 .userId(userId)
                 .startDate(startDate)
                 .endDate(startDate.plusDays(3 + random.nextInt(5)))
@@ -94,7 +94,7 @@ public class TestUtil {
      */
     public static Reminder createTestReminder(Long userId) {
         return Reminder.builder()
-                .id(random.nextLong(1000))
+                .reminderid(random.nextLong(1000))
                 .userId(userId)
                 .title("Test reminder " + random.nextInt(1000))
                 .description("Test description " + random.nextInt(1000))
@@ -114,9 +114,9 @@ public class TestUtil {
     public static Medication createTestMedication(Long userId) {
         LocalDate startDate = LocalDate.now();
         return Medication.builder()
-                .id(random.nextLong(1000))
+                .medicineid(random.nextLong(1000))
                 .userId(userId)
-                .medicinename("Test medication " + random.nextInt(1000))
+                .medicine("Test medication " + random.nextInt(1000))
                 .dosage(random.nextInt(500) + "mg")
                 .frequency(getRandomFrequency())
                 .startDate(startDate)

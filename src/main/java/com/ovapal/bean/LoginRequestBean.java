@@ -12,4 +12,6 @@ import lombok.NoArgsConstructor;
 public class LoginRequestBean {
     private String email;
     private String password;
+    private String name;
+    private Integer age;
 } 

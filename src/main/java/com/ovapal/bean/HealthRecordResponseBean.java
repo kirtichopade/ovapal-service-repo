@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class HealthRecordResponseBean {
-    private Long id;
+    private Long healthId;
     private Long userId;
     private LocalDate recordDate;
     private Double weight;

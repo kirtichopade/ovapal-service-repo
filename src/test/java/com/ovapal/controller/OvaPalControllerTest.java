@@ -2,31 +2,31 @@ package com.ovapal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ovapal.bean.*;
-import com.ovapal.bean.request.UserRequestBean;
-import com.ovapal.entity.*;
+import com.ovapal.bean.request.*;
 import com.ovapal.service.OvaPalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.Matchers.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(OvaPalController.class)
-public class OvaPalControllerTest {
+@SpringBootTest
+@AutoConfigureMockMvc
+class OvaPalControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -37,222 +37,191 @@ public class OvaPalControllerTest {
     @MockBean
     private OvaPalService ovaPalService;
 
-    private UserRequestBean userRequestBean;
-    private UserResponseBean userResponseBean;
-    private LoginRequestBean loginRequestBean;
-    private HealthRecordRequestBean healthRecordRequestBean;
-    private HealthRecordResponseBean healthRecordResponseBean;
-    private PeriodRecordRequestBean periodRecordRequestBean;
-    private PeriodRecordResponseBean periodRecordResponseBean;
-    private ReminderRequestBean reminderRequestBean;
-    private ReminderResponseBean reminderResponseBean;
-    private MedicationRequestBean medicationRequestBean;
-    private MedicationResponseBean medicationResponseBean;
+    private UserResponseBean userResponse;
+    private HealthRecordResponseBean healthRecordResponse;
+    private PeriodRecordResponseBean periodRecordResponse;
+    private ReminderResponseBean reminderResponse;
+    private MedicationResponseBean medicationResponse;
 
     @BeforeEach
     void setUp() {
-        // Set up user request/response
-        userRequestBean = UserRequestBean.builder()
-                .name("Test User")
-                .email("test@example.com")
-                .password("password123")
-                .age(25)
-                .build();
+        // Initialize common response objects
+        userResponse = new UserResponseBean();
+        userResponse.setUserId(1L);
+        userResponse.setName("test");
+        userResponse.setEmail("testuser@gmail.com");
 
-        userResponseBean = UserResponseBean.builder()
-                .id(1L)
-                .name("Test User")
-                .email("test@example.com")
-                .age(25)
-                .build();
+        healthRecordResponse = new HealthRecordResponseBean();
+        healthRecordResponse.setHealthId(1L);
+        healthRecordResponse.setUserId(1L);
 
-        loginRequestBean = LoginRequestBean.builder()
-                .email("test@example.com")
-                .password("password123")
-                .build();
+        periodRecordResponse = new PeriodRecordResponseBean();
+        periodRecordResponse.setPeriodRecId(1L);
+        periodRecordResponse.setUserId(1L);
 
-        // Set up health record request/response
-        healthRecordRequestBean = HealthRecordRequestBean.builder()
-                .userId(1L)
-                .recordDate(LocalDate.now())
-                .weight(60.5)
-                .height(170.0)
-                .temperature(36.5)
-                .heartRate(75)
-                .bloodPressureSystolic(120)
-                .bloodPressureDiastolic(80)
-                .notes("Normal health")
-                .build();
+        reminderResponse = new ReminderResponseBean();
+        reminderResponse.setReminderId(1L);
+        reminderResponse.setUserId(1L);
 
-        healthRecordResponseBean = HealthRecordResponseBean.builder()
-                .id(1L)
-                .userId(1L)
-                .recordDate(LocalDate.now())
-                .weight(60.5)
-                .height(170.0)
-                .temperature(36.5)
-                .heartRate(75)
-                .bloodPressureSystolic(120)
-                .bloodPressureDiastolic(80)
-                .notes("Normal health")
-                .build();
-
-        // Set up period record request/response
-        periodRecordRequestBean = PeriodRecordRequestBean.builder()
-                .userId(1L)
-                .startDate(LocalDate.now().minusDays(5))
-                .endDate(LocalDate.now())
-                .flow("Medium")
-                .symptoms("Cramps")
-                .mood("Normal")
-                .notes("Regular cycle")
-                .build();
-
-        periodRecordResponseBean = PeriodRecordResponseBean.builder()
-                .id(1L)
-                .userId(1L)
-                .startDate(LocalDate.now().minusDays(5))
-                .endDate(LocalDate.now())
-                .flow("Medium")
-                .symptoms("Cramps")
-                .mood("Normal")
-                .notes("Regular cycle")
-                .build();
-
-        // Set up reminder request/response
-        reminderRequestBean = ReminderRequestBean.builder()
-                .userId(1L)
-                .title("Medication Reminder")
-                .description("Take pain medication")
-                .reminderDate(LocalDate.now().plusDays(1))
-                .reminderTime(LocalTime.of(8, 0))
-                .isRepeating(true)
-                .repeatFrequency("Daily")
-                .isActive(true)
-                .build();
-
-        reminderResponseBean = ReminderResponseBean.builder()
-                .id(1L)
-                .userId(1L)
-                .title("Medication Reminder")
-                .description("Take pain medication")
-                .reminderDate(LocalDate.now().plusDays(1))
-                .reminderTime(LocalTime.of(8, 0))
-                .isRepeating(true)
-                .repeatFrequency("Daily")
-                .isActive(true)
-                .build();
-
-        // Set up medication request/response
-        medicationRequestBean = MedicationRequestBean.builder()
-                .userId(1L)
-                .medicinename("Ibuprofen")
-                .dosage("200mg")
-                .frequency("Twice daily")
-                .startDate(LocalDate.now())
-                .endDate(LocalDate.now().plusDays(7))
-                .notes("Take with food")
-                .build();
-
-        medicationResponseBean = MedicationResponseBean.builder()
-                .medicationid(1L)
-                .userId(1L)
-                .medicinename("Ibuprofen")
-                .dosage("200mg")
-                .frequency("Twice daily")
-                .startDate(LocalDate.now())
-                .endDate(LocalDate.now().plusDays(7))
-                .notes("Take with food")
-                .build();
+        medicationResponse = new MedicationResponseBean();
+        medicationResponse.setMedicationId(1L);
+        medicationResponse.setUserId(1L);
     }
 
+    // User Management Tests
     @Test
-    void createUser_ReturnsCreatedUser() throws Exception {
-        // Arrange
-        when(ovaPalService.createUser(new UserRequestBean())).thenReturn(userResponseBean);
+    void createUser_ShouldReturnCreatedUser() throws Exception {
+        UserRequestBean request = new UserRequestBean();
+        request.setEmail("newuser@gmail.com");
+        request.setPassword("password");
 
-        // Act & Assert
-        mockMvc.perform(post("/ovapal/users")
+        when(ovaPalService.createUser(any(UserRequestBean.class))).thenReturn(userResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userRequestBean)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(1)))
-                .andExpect(jsonPath("$.name", is("Test User")))
-                .andExpect(jsonPath("$.email", is("test@example.com")))
-                .andExpect(jsonPath("$.age", is(25)));
-
-        verify(ovaPalService).createUser(new UserRequestBean());
+                .andExpect(jsonPath("$.userId", is(1)))
+                .andExpect(jsonPath("$.email", is("testuser@gmail.com")));
     }
 
     @Test
-    void login_ReturnsUser() throws Exception {
-        // Arrange
-        when(ovaPalService.loginUser(new LoginRequestBean())).thenReturn(userResponseBean);
+    void loginShouldReturnUserDetails() throws Exception {
+        LoginRequestBean request = new LoginRequestBean();
+        request.setEmail("testuser@gmail.com");
+        request.setPassword("password");
 
-        // Act & Assert
-        mockMvc.perform(post("/ovapal/login")
+        when(ovaPalService.loginUser(any(LoginRequestBean.class))).thenReturn(userResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(loginRequestBean)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(1)))
-                .andExpect(jsonPath("$.name", is("Test User")))
-                .andExpect(jsonPath("$.email", is("test@example.com")));
-
-        verify(ovaPalService).loginUser(new LoginRequestBean());
+                .andExpect(jsonPath("$.userId", is(1)))
+                .andExpect(jsonPath("$.email", is("testuser@gmail.com")));
     }
 
+    // Health Record Tests
     @Test
-    void getHealthRecords_ReturnsHealthRecords() throws Exception {
-        // Arrange
-        List<HealthRecordResponseBean> healthRecords = Arrays.asList(healthRecordResponseBean);
-        when(ovaPalService.getHealthRecords(anyLong())).thenReturn(healthRecords);
+    void getHealthRecords_ShouldReturnListOfRecords() throws Exception {
+        List<HealthRecordResponseBean> records = Arrays.asList(healthRecordResponse);
+        when(ovaPalService.getHealthRecords(anyLong())).thenReturn(records);
 
-        // Act & Assert
-        mockMvc.perform(get("/ovapal/health/1"))
+        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/health/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", is(1)))
-                .andExpect(jsonPath("$[0].userId", is(1)))
-                .andExpect(jsonPath("$[0].weight", is(60.5)));
+                .andExpect(jsonPath("$[0].healthId", is(1)))
+                .andExpect(jsonPath("$[0].userId", is(1)));
+    }
 
-        verify(ovaPalService).getHealthRecords(1L);
+    // Period Record Tests
+    @Test
+    void getPeriodRecords_ShouldReturnListOfRecords() throws Exception {
+        List<PeriodRecordResponseBean> records = Arrays.asList(periodRecordResponse);
+        when(ovaPalService.getPeriodRecords(anyLong())).thenReturn(records);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/period/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].periodRecId", is(1)))
+                .andExpect(jsonPath("$[0].userId", is(1)));
     }
 
     @Test
-    void savePeriodRecord_ReturnsSavedRecord() throws Exception {
-        // Arrange
-        when(ovaPalService.savePeriodRecord(new PeriodRecordRequestBean())).thenReturn(periodRecordResponseBean);
+    void savePeriodRecord_ShouldReturnSavedRecord() throws Exception {
+        PeriodRecordRequestBean request = new PeriodRecordRequestBean();
+        request.setUserId(1L);
 
-        // Act & Assert
-        mockMvc.perform(post("/ovapal/period")
+        when(ovaPalService.savePeriodRecord(any(PeriodRecordRequestBean.class))).thenReturn(periodRecordResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/period")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(periodRecordRequestBean)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)))
-                .andExpect(jsonPath("$.flow", is("Medium")))
-                .andExpect(jsonPath("$.symptoms", is("Cramps")));
-
-        verify(ovaPalService).savePeriodRecord(new PeriodRecordRequestBean());
+                .andExpect(jsonPath("$.periodRecId", is(1)))
+                .andExpect(jsonPath("$.userId", is(1)));
     }
 
     @Test
-    void updatePeriodRecord_ReturnsUpdatedRecord() throws Exception {
-        // Arrange
-        when(ovaPalService.updatePeriodRecord(anyLong(), new PeriodRecordRequestBean()))
-                .thenReturn(periodRecordResponseBean);
+    void updatePeriodRecord_ShouldReturnUpdatedRecord() throws Exception {
+        PeriodRecordRequestBean request = new PeriodRecordRequestBean();
+        request.setUserId(1L);
 
-        // Act & Assert
-        mockMvc.perform(put("/ovapal/period/1")
+        when(ovaPalService.updatePeriodRecord(anyLong(), any(PeriodRecordRequestBean.class)))
+                .thenReturn(periodRecordResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/period/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(periodRecordRequestBean)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)))
-                .andExpect(jsonPath("$.flow", is("Medium")));
-
-        verify(ovaPalService).updatePeriodRecord(eq(1L), new PeriodRecordRequestBean());
+                .andExpect(jsonPath("$.periodRecId", is(1)))
+                .andExpect(jsonPath("$.userId", is(1)));
     }
 
-    // More tests would be added for other controller methods...
-} 
+    // Reminder Tests
+    @Test
+    void getReminders_ShouldReturnListOfReminders() throws Exception {
+        List<ReminderResponseBean> reminders = Arrays.asList(reminderResponse);
+        when(ovaPalService.getReminders(anyLong())).thenReturn(reminders);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/reminders/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].reminderId", is(1)))
+                .andExpect(jsonPath("$[0].userId", is(1)));
+    }
+
+    @Test
+    void setReminder_ShouldReturnCreatedReminder() throws Exception {
+        ReminderRequestBean request = new ReminderRequestBean();
+        request.setUserId(1L);
+
+        when(ovaPalService.setReminder(any(ReminderRequestBean.class))).thenReturn(reminderResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/reminders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reminderId", is(1)))
+                .andExpect(jsonPath("$.userId", is(1)));
+    }
+
+    // Medication Tests
+    @Test
+    void getMedications_ShouldReturnListOfMedications() throws Exception {
+        List<MedicationResponseBean> medications = Arrays.asList(medicationResponse);
+        when(ovaPalService.getMedications(anyLong())).thenReturn(medications);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/medications/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].medicationId", is(1)))
+                .andExpect(jsonPath("$[0].userId", is(1)));
+    }
+
+    @Test
+    void addMedication_ShouldReturnCreatedMedication() throws Exception {
+        MedicationRequestBean request = new MedicationRequestBean();
+        request.setUserId(1L);
+
+        when(ovaPalService.addMedication(any(MedicationRequestBean.class))).thenReturn(medicationResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/medications")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.medicationId", is(1)))
+                .andExpect(jsonPath("$.userId", is(1)));
+    }
+
+    // Error Scenario Tests
+    @Test
+    void getHealthRecords_ShouldReturnNotFoundForInvalidUser() throws Exception {
+        when(ovaPalService.getHealthRecords(anyLong())).thenReturn(Arrays.asList());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/health/999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+}

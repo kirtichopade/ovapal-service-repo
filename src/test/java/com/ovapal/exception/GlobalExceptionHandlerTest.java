@@ -1,101 +1,167 @@
 package com.ovapal.exception;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.context.request.WebRequest;
 
-import com.ovapal.bean.request.UserRequestBean;
-import com.ovapal.service.OvaPalService;
-import com.ovapal.util.TestUtil;
+import java.time.LocalDateTime;
+import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-public class GlobalExceptionHandlerTest {
+@ExtendWith(MockitoExtension.class)
+class GlobalExceptionHandlerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private GlobalExceptionHandler globalExceptionHandler;
 
-    @MockBean
-    private OvaPalService ovaPalService;
+    @Mock
+    private WebRequest webRequest;
 
     @Test
-    void handleResourceNotFoundException() throws Exception {
+    void handleResourceNotFoundException_ShouldReturnNotFoundResponse() {
         // Arrange
-        when(ovaPalService.getHealthRecords(any(Long.class)))
-                .thenThrow(new ResourceNotFoundException("Health record not found with ID: 999"));
+        String errorMessage = "Resource not found";
+        when(webRequest.getDescription(false)).thenReturn("uri=/api/resource/1");
 
-        // Act & Assert
-        mockMvc.perform(post("/ovapal/health/999")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"))
-                .andExpect(jsonPath("$.message").value("Health record not found with ID: 999"));
+        // Act
+        ResponseEntity<Object> response = globalExceptionHandler.handleResourceNotFoundException(
+                new ResourceNotFoundException(errorMessage), webRequest);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertNotNull(body);
+        assertEquals(HttpStatus.NOT_FOUND.value(), body.get("status"));
+        assertEquals("Not Found", body.get("error"));
+        assertEquals(errorMessage, body.get("message"));
+        assertEquals("uri=/api/resource/1", body.get("path"));
+        assertNotNull(body.get("timestamp"));
     }
 
     @Test
-    void handleInvalidOperationException() throws Exception {
+    void handleInvalidOperationException_ShouldReturnBadRequestResponse() {
         // Arrange
-        UserRequestBean invalidUser = UserRequestBean.builder()
-                .name("Test User")
-                .email("invalid-email")
-                .password("pass")  // Too short
-                .age(25)
-                .build();
+        String errorMessage = "Invalid operation";
+        when(webRequest.getDescription(false)).thenReturn("uri=/api/operation");
 
-        when(ovaPalService.createUser(any(UserRequestBean.class)))
-                .thenThrow(new InvalidOperationException("Invalid email format"));
+        // Act
+        ResponseEntity<Object> response = globalExceptionHandler.handleInvalidOperationException(
+                new InvalidOperationException(errorMessage), webRequest);
 
-        // Act & Assert
-        mockMvc.perform(post("/ovapal/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(TestUtil.asJsonString(invalidUser)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.message").value("Invalid email format"));
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertNotNull(body);
+        assertEquals(HttpStatus.BAD_REQUEST.value(), body.get("status"));
+        assertEquals("Bad Request", body.get("error"));
+        assertEquals(errorMessage, body.get("message"));
+        assertEquals("uri=/api/operation", body.get("path"));
+        assertNotNull(body.get("timestamp"));
     }
 
     @Test
-    void handleAuthenticationException() throws Exception {
+    void handleAuthenticationException_ShouldReturnUnauthorizedResponse() {
         // Arrange
-        when(ovaPalService.loginUser(any()))
-                .thenThrow(new AuthenticationException("Invalid email or password"));
+        String errorMessage = "Authentication failed";
+        when(webRequest.getDescription(false)).thenReturn("uri=/api/auth");
 
-        // Act & Assert
-        mockMvc.perform(post("/ovapal/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"test@example.com\",\"password\":\"wrongpass\"}"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(401))
-                .andExpect(jsonPath("$.error").value("Unauthorized"))
-                .andExpect(jsonPath("$.message").value("Invalid email or password"));
+        // Act
+        ResponseEntity<Object> response = globalExceptionHandler.handleAuthenticationException(
+                new AuthenticationException(errorMessage), webRequest);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertNotNull(body);
+        assertEquals(HttpStatus.UNAUTHORIZED.value(), body.get("status"));
+        assertEquals("Unauthorized", body.get("error"));
+        assertEquals(errorMessage, body.get("message"));
+        assertEquals("uri=/api/auth", body.get("path"));
+        assertNotNull(body.get("timestamp"));
     }
 
     @Test
-    void handleGenericException() throws Exception {
+    void handleGlobalException_ShouldReturnInternalServerErrorResponse() {
         // Arrange
-        when(ovaPalService.createUser(any(UserRequestBean.class)))
-                .thenThrow(new RuntimeException("Unexpected error"));
+        String errorMessage = "Unexpected error occurred";
+        when(webRequest.getDescription(false)).thenReturn("uri=/api/endpoint");
 
-        // Act & Assert
-        mockMvc.perform(post("/ovapal/users")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(TestUtil.asJsonString(TestUtil.createTestUserRequestBean())))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.error").value("Internal Server Error"))
-                .andExpect(jsonPath("$.message").value("Unexpected error"));
+        // Act
+        ResponseEntity<Object> response = globalExceptionHandler.handleGlobalException(
+                new Exception(errorMessage), webRequest);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertNotNull(body);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), body.get("status"));
+        assertEquals("Internal Server Error", body.get("error"));
+        assertEquals(errorMessage, body.get("message"));
+        assertEquals("uri=/api/endpoint", body.get("path"));
+        assertNotNull(body.get("timestamp"));
     }
-} 
+
+    @Test
+    void buildErrorResponse_ShouldContainCorrectStructure() {
+        // Arrange
+        String errorMessage = "Test error";
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+
+        // Act
+        ResponseEntity<Object> response = globalExceptionHandler.buildErrorResponse(
+                new RuntimeException(errorMessage), status, webRequest);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(status, response.getStatusCode());
+
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        assertNotNull(body);
+        assertEquals(5, body.size());
+        assertTrue(body.containsKey("timestamp"));
+        assertTrue(body.containsKey("status"));
+        assertTrue(body.containsKey("error"));
+        assertTrue(body.containsKey("message"));
+        assertTrue(body.containsKey("path"));
+
+        assertEquals(status.value(), body.get("status"));
+        assertEquals(status.getReasonPhrase(), body.get("error"));
+        assertEquals(errorMessage, body.get("message"));
+        assertEquals("uri=/test", body.get("path"));
+    }
+
+    @Test
+    void buildErrorResponse_ShouldUseCurrentTimestamp() {
+        // Arrange
+        LocalDateTime beforeTest = LocalDateTime.now();
+        when(webRequest.getDescription(false)).thenReturn("uri=/test");
+
+        // Act
+        ResponseEntity<Object> response = globalExceptionHandler.buildErrorResponse(
+                new RuntimeException("Test"), HttpStatus.BAD_REQUEST, webRequest);
+        LocalDateTime afterTest = LocalDateTime.now();
+
+        // Assert
+        Map<String, Object> body = (Map<String, Object>) response.getBody();
+        LocalDateTime timestamp = LocalDateTime.parse(body.get("timestamp").toString());
+
+        assertTrue(timestamp.isAfter(beforeTest) || timestamp.isEqual(beforeTest));
+        assertTrue(timestamp.isBefore(afterTest) || timestamp.isEqual(afterTest));
+    }
+}

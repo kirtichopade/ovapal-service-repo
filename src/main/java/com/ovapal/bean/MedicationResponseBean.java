@@ -11,9 +11,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 public class MedicationResponseBean {
-    private Long medicationid;
+    private Long medicationId;
     private Long userId;
-    private String medicinename;
+    private String medicine;
     private String dosage;
     private String frequency;
     private LocalDate startDate;

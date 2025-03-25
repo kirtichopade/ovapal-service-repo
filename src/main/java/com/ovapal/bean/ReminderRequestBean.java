@@ -13,6 +13,7 @@ import java.time.LocalTime;
 @Builder
 public class ReminderRequestBean {
     private Long userId;
+    private Long reminderId;
     private String title;
     private String description;
     private LocalDate reminderDate;

@@ -12,7 +12,8 @@ import java.time.LocalDate;
 @Builder
 public class MedicationRequestBean {
     private Long userId;
-    private String medicinename;
+    private String medicineId;
+    private String medicine;
     private String dosage;
     private String frequency;
     private LocalDate startDate;
