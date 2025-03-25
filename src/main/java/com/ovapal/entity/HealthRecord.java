@@ -3,8 +3,7 @@ package com.ovapal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.sql.Date;
-import java.sql.Timestamp;
+
 import java.time.LocalDate;
 
 @Entity
