@@ -1,6 +1,7 @@
 package com.ovapal.service;
 
 import com.ovapal.bean.*;
+import com.ovapal.bean.request.UserRequestBean;
 import com.ovapal.entity.*;
 import com.ovapal.repository.*;
 import com.ovapal.exception.ResourceNotFoundException;
@@ -459,7 +460,7 @@ public class OvaPalService {
         return HealthRecordResponseBean.builder()
                 .id(healthRecord.getId())
                 .userId(healthRecord.getUserId())
-                .recordDate(healthRecord.getRecordDate())
+                .recordDate(LocalDate.now())
                 .weight(healthRecord.getWeight())
                 .height(healthRecord.getHeight())
                 .temperature(healthRecord.getTemperature())

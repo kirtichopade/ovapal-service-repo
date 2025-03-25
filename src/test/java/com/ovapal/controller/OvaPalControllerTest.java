@@ -2,6 +2,7 @@ package com.ovapal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ovapal.bean.*;
+import com.ovapal.bean.request.UserRequestBean;
 import com.ovapal.entity.*;
 import com.ovapal.service.OvaPalService;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;
@@ -167,7 +169,7 @@ public class OvaPalControllerTest {
     @Test
     void createUser_ReturnsCreatedUser() throws Exception {
         // Arrange
-        when(ovaPalService.createUser(any(UserRequestBean.class))).thenReturn(userResponseBean);
+        when(ovaPalService.createUser(new UserRequestBean())).thenReturn(userResponseBean);
 
         // Act & Assert
         mockMvc.perform(post("/ovapal/users")
@@ -179,13 +181,13 @@ public class OvaPalControllerTest {
                 .andExpect(jsonPath("$.email", is("test@example.com")))
                 .andExpect(jsonPath("$.age", is(25)));
 
-        verify(ovaPalService).createUser(any(UserRequestBean.class));
+        verify(ovaPalService).createUser(new UserRequestBean());
     }
 
     @Test
     void login_ReturnsUser() throws Exception {
         // Arrange
-        when(ovaPalService.loginUser(any(LoginRequestBean.class))).thenReturn(userResponseBean);
+        when(ovaPalService.loginUser(new LoginRequestBean())).thenReturn(userResponseBean);
 
         // Act & Assert
         mockMvc.perform(post("/ovapal/login")
@@ -196,7 +198,7 @@ public class OvaPalControllerTest {
                 .andExpect(jsonPath("$.name", is("Test User")))
                 .andExpect(jsonPath("$.email", is("test@example.com")));
 
-        verify(ovaPalService).loginUser(any(LoginRequestBean.class));
+        verify(ovaPalService).loginUser(new LoginRequestBean());
     }
 
     @Test
@@ -219,7 +221,7 @@ public class OvaPalControllerTest {
     @Test
     void savePeriodRecord_ReturnsSavedRecord() throws Exception {
         // Arrange
-        when(ovaPalService.savePeriodRecord(any(PeriodRecordRequestBean.class))).thenReturn(periodRecordResponseBean);
+        when(ovaPalService.savePeriodRecord(new PeriodRecordRequestBean())).thenReturn(periodRecordResponseBean);
 
         // Act & Assert
         mockMvc.perform(post("/ovapal/period")
@@ -231,13 +233,13 @@ public class OvaPalControllerTest {
                 .andExpect(jsonPath("$.flow", is("Medium")))
                 .andExpect(jsonPath("$.symptoms", is("Cramps")));
 
-        verify(ovaPalService).savePeriodRecord(any(PeriodRecordRequestBean.class));
+        verify(ovaPalService).savePeriodRecord(new PeriodRecordRequestBean());
     }
 
     @Test
     void updatePeriodRecord_ReturnsUpdatedRecord() throws Exception {
         // Arrange
-        when(ovaPalService.updatePeriodRecord(anyLong(), any(PeriodRecordRequestBean.class)))
+        when(ovaPalService.updatePeriodRecord(anyLong(), new PeriodRecordRequestBean()))
                 .thenReturn(periodRecordResponseBean);
 
         // Act & Assert
@@ -249,7 +251,7 @@ public class OvaPalControllerTest {
                 .andExpect(jsonPath("$.userId", is(1)))
                 .andExpect(jsonPath("$.flow", is("Medium")));
 
-        verify(ovaPalService).updatePeriodRecord(eq(1L), any(PeriodRecordRequestBean.class));
+        verify(ovaPalService).updatePeriodRecord(eq(1L), new PeriodRecordRequestBean());
     }
 
     // More tests would be added for other controller methods...

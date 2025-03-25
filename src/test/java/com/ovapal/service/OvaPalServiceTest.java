@@ -1,6 +1,7 @@
 package com.ovapal.service;
 
 import com.ovapal.bean.*;
+import com.ovapal.bean.request.UserRequestBean;
 import com.ovapal.entity.*;
 import com.ovapal.exception.AuthenticationException;
 import com.ovapal.exception.InvalidOperationException;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Arrays;

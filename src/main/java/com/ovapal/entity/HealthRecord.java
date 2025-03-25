@@ -3,6 +3,10 @@ package com.ovapal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -15,7 +19,7 @@ public class HealthRecord {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long userId;
-    private TimeStamp recordDate;
+    private LocalDate recordDate;
     private Double weight;
     private Double height;
     private Double temperature;
