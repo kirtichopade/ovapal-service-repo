@@ -1,4 +1,4 @@
-package com.ovapal.bean.request;
+package com.ovapal.bean;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

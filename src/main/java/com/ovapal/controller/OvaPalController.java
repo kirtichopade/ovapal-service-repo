@@ -1,8 +1,7 @@
 package com.ovapal.controller;
 
 import com.ovapal.bean.*;
-import com.ovapal.bean.request.UserRequestBean;
-import com.ovapal.entity.*;
+import com.ovapal.bean.UserRequestBean;
 import com.ovapal.service.OvaPalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

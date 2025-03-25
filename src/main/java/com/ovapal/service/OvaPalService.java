@@ -1,7 +1,7 @@
 package com.ovapal.service;
 
 import com.ovapal.bean.*;
-import com.ovapal.bean.request.UserRequestBean;
+import com.ovapal.bean.UserRequestBean;
 import com.ovapal.entity.*;
 import com.ovapal.repository.*;
 import com.ovapal.exception.ResourceNotFoundException;

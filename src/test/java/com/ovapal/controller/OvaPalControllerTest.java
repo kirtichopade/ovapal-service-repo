@@ -2,7 +2,6 @@ package com.ovapal.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ovapal.bean.*;
-import com.ovapal.bean.request.*;
 import com.ovapal.service.OvaPalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
