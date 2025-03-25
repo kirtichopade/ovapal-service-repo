@@ -3,7 +3,7 @@ package com.ovapal.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.ovapal.bean.request.UserRequestBean;
+import com.ovapal.bean.*;
 import com.ovapal.entity.*;
 
 import java.time.LocalDate;

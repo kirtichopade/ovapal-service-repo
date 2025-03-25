@@ -1,7 +1,6 @@
 package com.ovapal.service;
 
 import com.ovapal.bean.*;
-import com.ovapal.bean.request.UserRequestBean;
 import com.ovapal.entity.*;
 import com.ovapal.repository.*;
 import com.ovapal.exception.ResourceNotFoundException;
@@ -45,11 +44,6 @@ public class OvaPalService {
     
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
-    
-    @PostConstruct
-    public void init() {
-        logger.info("OvaPalService initialized successfully");
-    }
 
     // User Management
     @Transactional
@@ -141,18 +135,8 @@ public class OvaPalService {
         verifyUserExists(healthRecordRequestBean.getUserId());
         
         // Map bean to entity
-        HealthRecord healthRecord = HealthRecord.builder()
-                .userId(healthRecordRequestBean.getUserId())
-                .recordDate(healthRecordRequestBean.getRecordDate())
-                .weight(healthRecordRequestBean.getWeight())
-                .height(healthRecordRequestBean.getHeight())
-                .temperature(healthRecordRequestBean.getTemperature())
-                .heartRate(healthRecordRequestBean.getHeartRate())
-                .bloodPressureSystolic(healthRecordRequestBean.getBloodPressureSystolic())
-                .bloodPressureDiastolic(healthRecordRequestBean.getBloodPressureDiastolic())
-                .notes(healthRecordRequestBean.getNotes())
-                .build();
-        
+        HealthRecord healthRecord = getHealthRecord(healthRecordRequestBean);
+
         // Validate health record
         validateHealthRecord(healthRecord);
         
@@ -168,7 +152,22 @@ public class OvaPalService {
         // Map entity to response bean
         return mapHealthRecordToResponseBean(savedRecord);
     }
-    
+
+    private static HealthRecord getHealthRecord(HealthRecordRequestBean healthRecordRequestBean) {
+        HealthRecord healthRecord = HealthRecord.builder()
+                .userId(healthRecordRequestBean.getUserId())
+                .recordDate(healthRecordRequestBean.getRecordDate())
+                .weight(healthRecordRequestBean.getWeight())
+                .height(healthRecordRequestBean.getHeight())
+                .temperature(healthRecordRequestBean.getTemperature())
+                .heartRate(healthRecordRequestBean.getHeartRate())
+                .bloodPressureSystolic(healthRecordRequestBean.getBloodPressureSystolic())
+                .bloodPressureDiastolic(healthRecordRequestBean.getBloodPressureDiastolic())
+                .notes(healthRecordRequestBean.getNotes())
+                .build();
+        return healthRecord;
+    }
+
     // Period Records
     public List<PeriodRecordResponseBean> getPeriodRecords(Long userId) { 
         logger.info("Fetching period records for user ID: {}", userId);
@@ -348,7 +347,7 @@ public class OvaPalService {
         LocalDate now = LocalDate.now();
         List<Medication> currentMedications = medications.stream()
                 .filter(med -> med.getEndDate() == null || !med.getEndDate().isBefore(now))
-                .collect(Collectors.toList());
+                .toList();
         
         logger.info("Found {} current medications for user ID: {}", currentMedications.size(), userId);
         
@@ -509,5 +508,32 @@ public class OvaPalService {
                 .endDate(medication.getEndDate())
                 .notes(medication.getNotes())
                 .build();
+    }
+
+    @Transactional
+    public HealthRecordResponseBean updateHealthRecord(Long pathHealthId, HealthRecordRequestBean request) {
+        logger.info("Updating health record ID: {} for user ID: {}", pathHealthId, request.getUserId());
+
+        // Validation
+        if (!pathHealthId.equals(request.getHealthId())) {
+            throw new InvalidOperationException("Path healthId doesn't match request body healthId");
+        }
+        verifyUserExists(request.getUserId());
+
+        HealthRecord existingRecord = healthRecordRepository.findById(pathHealthId)
+                .orElseThrow(() -> new ResourceNotFoundException("Health record not found"));
+
+        if (!existingRecord.getUserId().equals(request.getUserId())) {
+            throw new InvalidOperationException("Health record doesn't belong to this user");
+        }
+
+        // Business logic
+        HealthRecord healthRecord = getHealthRecord(request);
+        validateHealthRecord(healthRecord);
+
+        HealthRecord updatedRecord = healthRecordRepository.save(healthRecord);
+        logger.info("Updated health record with ID: {}", updatedRecord.getHealthId());
+
+        return mapHealthRecordToResponseBean(updatedRecord);
     }
 } 

@@ -1,8 +1,6 @@
 package com.ovapal.controller;
 
 import com.ovapal.bean.*;
-import com.ovapal.bean.request.UserRequestBean;
-import com.ovapal.entity.*;
 import com.ovapal.service.OvaPalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,9 +24,23 @@ public class OvaPalController {
         return ResponseEntity.ok(ovaPalService.loginUser(loginRequestBean));
     }
 
+    @PostMapping("/health")
+    public ResponseEntity<HealthRecordResponseBean> createHealthRecord(
+            @RequestBody HealthRecordRequestBean healthRecordRequestBean) {
+        return ResponseEntity.ok(ovaPalService.saveHealthRecord(healthRecordRequestBean));
+    }
+
     @GetMapping("/health/{userId}")
     public ResponseEntity<List<HealthRecordResponseBean>> getHealthRecords(@PathVariable Long userId) {
         return ResponseEntity.ok(ovaPalService.getHealthRecords(userId));
+    }
+
+    // PUT - Update existing health record
+    @PutMapping("/health/{healthId}")
+    public ResponseEntity<HealthRecordResponseBean> updateHealthRecord(
+            @PathVariable Long healthId,
+            @RequestBody HealthRecordRequestBean healthRecordRequestBean) {
+        return ResponseEntity.ok(ovaPalService.updateHealthRecord(healthId, healthRecordRequestBean));
     }
 
     @GetMapping("/period/{userId}")

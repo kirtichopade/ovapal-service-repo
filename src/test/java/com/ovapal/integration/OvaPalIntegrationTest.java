@@ -1,7 +1,7 @@
 package com.ovapal.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ovapal.bean.request.UserRequestBean;
+import com.ovapal.bean.UserRequestBean;
 import com.ovapal.entity.User;
 import com.ovapal.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;

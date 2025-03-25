@@ -1,7 +1,6 @@
 package com.ovapal.service;
 
 import com.ovapal.bean.*;
-import com.ovapal.bean.request.UserRequestBean;
 import com.ovapal.entity.*;
 import com.ovapal.exception.AuthenticationException;
 import com.ovapal.exception.InvalidOperationException;
