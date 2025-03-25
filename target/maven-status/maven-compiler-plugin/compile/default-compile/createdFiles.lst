@@ -1,0 +1,16 @@
+com/ovapal/entity/HealthRecord.class
+com/ovapal/repository/HealthRecordRepository.class
+com/ovapal/entity/HealthRecord$HealthRecordBuilder.class
+com/ovapal/repository/ReminderRepository.class
+com/ovapal/entity/Reminder.class
+com/ovapal/entity/PeriodRecord.class
+com/ovapal/service/OvaPalService.class
+com/ovapal/repository/UserRepository.class
+com/ovapal/entity/Reminder$ReminderBuilder.class
+com/ovapal/entity/PeriodRecord$PeriodRecordBuilder.class
+com/ovapal/entity/User.class
+com/ovapal/OvaPalApplication.class
+com/ovapal/repository/PeriodRecordRepository.class
+com/ovapal/controller/OvaPalController.class
+com/ovapal/config/AppConfig.class
+com/ovapal/entity/User$UserBuilder.class
