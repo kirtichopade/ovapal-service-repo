@@ -6,6 +6,9 @@ import com.ovapal.repository.*;
 import com.ovapal.exception.ResourceNotFoundException;
 import com.ovapal.exception.InvalidOperationException;
 import com.ovapal.exception.AuthenticationException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
@@ -19,6 +22,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;import javax.crypto.SecretKey;
+import java.util.Date;
 
 @Service
 public class OvaPalService {
@@ -89,24 +95,28 @@ public class OvaPalService {
         // Map entity to response bean
         return mapUserToResponseBean(savedUser);
     }
-    
-    public UserResponseBean loginUser(LoginRequestBean loginRequestBean) {
+
+    public LoginResponse loginUser(LoginRequestBean loginRequestBean) {
         logger.info("Login attempt for user with email: {}", loginRequestBean.getEmail());
-        
+
         // Validate login request
         if (loginRequestBean.getEmail() == null || loginRequestBean.getPassword() == null) {
             logger.error("Email or password is null");
             throw new AuthenticationException("Email and password are required");
         }
-        
+
         // Find user by email
         Optional<User> userOpt = userRepository.findByEmail(loginRequestBean.getEmail());
-        
+
         if (userOpt.isPresent() && passwordEncoder.matches(loginRequestBean.getPassword(), userOpt.get().getPassword())) {
             logger.info("Login successful for user: {}", userOpt.get().getName());
-            return mapUserToResponseBean(userOpt.get());
+
+            // Generate token (implement your token generation logic here)
+            String token = generateToken(userOpt.get().getEmail());
+
+            return new LoginResponse(token, mapUserToResponseBean(userOpt.get()));
         }
-        
+
         logger.warn("Login failed for email: {}", loginRequestBean.getEmail());
         throw new AuthenticationException("Invalid email or password");
     }
@@ -639,5 +649,18 @@ public class OvaPalService {
         }
         medicationRepository.deleteById(medicationId);
         logger.info("Deleted medication ID: {}", medicationId);
+    }
+
+    private String generateToken(String email) {
+        // Use a proper 256-bit (32 character) secret key
+        String secretKey = "your-256-bit-secret-1234567890abcdef";
+        SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+        return Jwts.builder()
+                .setSubject(email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24 hours
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
     }
 } 

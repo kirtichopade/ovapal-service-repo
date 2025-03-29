@@ -21,7 +21,7 @@ public class OvaPalController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserResponseBean> login(@RequestBody LoginRequestBean loginRequestBean) {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestBean loginRequestBean) {
         return ResponseEntity.ok(ovaPalService.loginUser(loginRequestBean));
     }
 
