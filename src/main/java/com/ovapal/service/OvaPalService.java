@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.time.LocalDate;
@@ -23,7 +22,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
@@ -96,7 +95,7 @@ public class OvaPalService {
         return mapUserToResponseBean(savedUser);
     }
 
-    public LoginResponse loginUser(LoginRequestBean loginRequestBean) {
+    public LoginResponseBean loginUser(LoginRequestBean loginRequestBean) {
         logger.info("Login attempt for user with email: {}", loginRequestBean.getEmail());
 
         // Validate login request
@@ -114,7 +113,7 @@ public class OvaPalService {
             // Generate token (implement your token generation logic here)
             String token = generateToken(userOpt.get().getEmail());
 
-            return new LoginResponse(token, mapUserToResponseBean(userOpt.get()));
+            return new LoginResponseBean(token, mapUserToResponseBean(userOpt.get()));
         }
 
         logger.warn("Login failed for email: {}", loginRequestBean.getEmail());

@@ -52,7 +52,7 @@ public class OvaPalServiceTest {
     private UserRequestBean userRequestBean;
     private UserResponseBean userResponse;
     private LoginRequestBean loginRequestBean;
-    private LoginResponse loginResponse;
+    private LoginResponseBean loginResponse;
     private HealthRecord testHealthRecord;
     private HealthRecordRequestBean healthRecordRequestBean;
     private PeriodRecord testPeriodRecord;
@@ -91,7 +91,7 @@ public class OvaPalServiceTest {
                 .age(25)
                 .build();
 
-        loginResponse = LoginResponse.builder()
+        loginResponse = LoginResponseBean.builder()
                 .token("test-token")
                 .user(userResponse)
                 .build();
@@ -210,7 +210,7 @@ public class OvaPalServiceTest {
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
 
-        LoginResponse result = ovaPalService.loginUser(loginRequestBean);
+        LoginResponseBean result = ovaPalService.loginUser(loginRequestBean);
 
         assertNotNull(result);
         assertNotNull(result.getToken());

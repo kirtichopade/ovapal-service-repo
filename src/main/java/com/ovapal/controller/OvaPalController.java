@@ -2,107 +2,202 @@ package com.ovapal.controller;
 
 import com.ovapal.bean.*;
 import com.ovapal.service.OvaPalService;
+import com.ovapal.util.JwtTokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/ovapal")
 @CrossOrigin(origins = "http://localhost:3000")
 public class OvaPalController {
-    
+
     @Autowired
     private OvaPalService ovaPalService;
 
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
+
+    // Public endpoints (no token required)
     @PostMapping("/users")
     public ResponseEntity<UserResponseBean> createUser(@RequestBody UserRequestBean userRequestBean) {
         return ResponseEntity.ok(ovaPalService.createUser(userRequestBean));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequestBean loginRequestBean) {
-        return ResponseEntity.ok(ovaPalService.loginUser(loginRequestBean));
+    public ResponseEntity<LoginResponseBean> login(@RequestBody LoginRequestBean loginRequestBean) {
+        LoginResponseBean userLogin = ovaPalService.loginUser(loginRequestBean);
+
+        // Generate JWT token
+        String token = jwtTokenUtil.generateToken(userLogin.getUser().getUserId());
+
+        // Create response with token and user details
+        LoginResponseBean response = new LoginResponseBean();
+        response.setToken(token);
+        response.setUser(userLogin.getUser());
+
+        return ResponseEntity.ok(response);
     }
 
+    // Health Record Endpoints
     @PostMapping("/health")
-    public ResponseEntity<HealthRecordResponseBean> createHealthRecord(
-            @RequestBody HealthRecordRequestBean healthRecordRequestBean) {
+    public ResponseEntity<?> createHealthRecord(
+            @RequestBody HealthRecordRequestBean healthRecordRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.saveHealthRecord(healthRecordRequestBean));
     }
 
     @GetMapping("/health/{userId}")
-    public ResponseEntity<List<HealthRecordResponseBean>> getHealthRecords(@PathVariable Long userId) {
+    public ResponseEntity<?> getHealthRecords(
+            @PathVariable Long userId,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.getHealthRecords(userId));
     }
 
-    // PUT - Update existing health record
     @PutMapping("/health/{healthId}")
-    public ResponseEntity<HealthRecordResponseBean> updateHealthRecord(
+    public ResponseEntity<?> updateHealthRecord(
             @PathVariable Long healthId,
-            @RequestBody HealthRecordRequestBean healthRecordRequestBean) {
+            @RequestBody HealthRecordRequestBean healthRecordRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.updateHealthRecord(healthId, healthRecordRequestBean));
     }
 
+    // Period Record Endpoints
     @GetMapping("/period/{userId}")
-    public ResponseEntity<List<PeriodRecordResponseBean>> getPeriodRecords(@PathVariable Long userId) {
+    public ResponseEntity<?> getPeriodRecords(
+            @PathVariable Long userId,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.getPeriodRecords(userId));
     }
 
     @PostMapping("/period")
-    public ResponseEntity<PeriodRecordResponseBean> savePeriodRecord(@RequestBody PeriodRecordRequestBean periodRecordRequestBean) {
+    public ResponseEntity<?> savePeriodRecord(
+            @RequestBody PeriodRecordRequestBean periodRecordRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.savePeriodRecord(periodRecordRequestBean));
     }
 
     @PutMapping("/period/{periodRecId}")
-    public ResponseEntity<PeriodRecordResponseBean> updatePeriodRecord(
+    public ResponseEntity<?> updatePeriodRecord(
             @PathVariable Long periodRecId,
-            @RequestBody PeriodRecordRequestBean periodRecordRequestBean) {
+            @RequestBody PeriodRecordRequestBean periodRecordRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.updatePeriodRecord(periodRecId, periodRecordRequestBean));
     }
 
+    // Reminder Endpoints
     @GetMapping("/reminders/{userId}")
-    public ResponseEntity<List<ReminderResponseBean>> getReminders(@PathVariable Long userId) {
+    public ResponseEntity<?> getReminders(
+            @PathVariable Long userId,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.getReminders(userId));
     }
 
     @PostMapping("/reminders")
-    public ResponseEntity<ReminderResponseBean> setReminder(@RequestBody ReminderRequestBean reminderRequestBean) {
+    public ResponseEntity<?> setReminder(
+            @RequestBody ReminderRequestBean reminderRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.setReminder(reminderRequestBean));
     }
 
     @PutMapping("/reminders/{reminderId}")
-    public ResponseEntity<ReminderResponseBean> updateReminder(
+    public ResponseEntity<?> updateReminder(
             @PathVariable Long reminderId,
-            @RequestBody ReminderRequestBean reminderRequestBean) {
+            @RequestBody ReminderRequestBean reminderRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(ovaPalService.updateReminder(reminderId, reminderRequestBean));
     }
 
-    @PostMapping("/medications")
-    public ResponseEntity<MedicationResponseBean> addMedication(@RequestBody MedicationRequestBean medicationRequestBean) {
-        return ResponseEntity.ok(ovaPalService.addMedication(medicationRequestBean));
-    }
-    @PutMapping("/medications/{medicationId}")
-    public ResponseEntity<MedicationResponseBean> updateMedication(
-            @PathVariable Long medicationId,
-            @RequestBody MedicationRequestBean medicationRequestBean) {
-        return ResponseEntity.ok(ovaPalService.updateMedication(medicationId, medicationRequestBean));
-    }
-
-    @GetMapping("/medications/{userId}")
-    public ResponseEntity<List<MedicationResponseBean>> getMedications(@PathVariable Long userId) {
-        return ResponseEntity.ok(ovaPalService.getMedications(userId));
-    }
-
     @DeleteMapping("/reminders/{reminderId}")
-    public ResponseEntity<String> deleteReminder(@PathVariable Long reminderId) {
+    public ResponseEntity<?> deleteReminder(
+            @PathVariable Long reminderId,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         ovaPalService.deleteReminder(reminderId);
         return ResponseEntity.ok("Reminder deleted successfully");
     }
 
+    // Medication Endpoints
+    @PostMapping("/medications")
+    public ResponseEntity<?> addMedication(
+            @RequestBody MedicationRequestBean medicationRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ovaPalService.addMedication(medicationRequestBean));
+    }
+
+    @PutMapping("/medications/{medicationId}")
+    public ResponseEntity<?> updateMedication(
+            @PathVariable Long medicationId,
+            @RequestBody MedicationRequestBean medicationRequestBean,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ovaPalService.updateMedication(medicationId, medicationRequestBean));
+    }
+
+    @GetMapping("/medications/{userId}")
+    public ResponseEntity<?> getMedications(
+            @PathVariable Long userId,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(ovaPalService.getMedications(userId));
+    }
+
     @DeleteMapping("/medications/{medicationId}")
-    public ResponseEntity<String> deleteMedication(@PathVariable Long medicationId) {
+    public ResponseEntity<?> deleteMedication(
+            @PathVariable Long medicationId,
+            @RequestHeader("Authorization") String authHeader) {
+        if (!validateToken(authHeader)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         ovaPalService.deleteMedication(medicationId);
         return ResponseEntity.ok("Medication deleted successfully");
     }
-} 
+
+    private boolean validateToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return false;
+        }
+
+        String token = authHeader.substring(7);
+        return jwtTokenUtil.validateToken(token);
+    }
+}

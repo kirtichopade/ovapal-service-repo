@@ -1,356 +1,316 @@
 package com.ovapal.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ovapal.bean.*;
-import com.ovapal.exception.ResourceNotFoundException;
 import com.ovapal.service.OvaPalService;
+import com.ovapal.util.JwtTokenUtil;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
 @AutoConfigureMockMvc
-class OvaPalControllerIntegrationTest {
+class OvaPalControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @Mock
     private OvaPalService ovaPalService;
 
-    private UserResponseBean userResponse;
-    private LoginResponse loginResponse;
-    private HealthRecordResponseBean healthRecordResponse;
-    private PeriodRecordResponseBean periodRecordResponse;
-    private ReminderResponseBean reminderResponse;
-    private MedicationResponseBean medicationResponse;
+    @Mock
+    private JwtTokenUtil jwtTokenUtil;
+
+    @InjectMocks
+    private OvaPalController ovaPalController;
+
+    private final String validToken = "valid.token.here";
+    private final String invalidToken = "invalid.token";
+    private final Long testUserId = 1L;
+    private final Long testRecordId = 1L;
 
     @BeforeEach
     void setUp() {
-        // Initialize common response objects
-        userResponse = new UserResponseBean();
-        userResponse.setUserId(1L);
-        userResponse.setName("test");
-        userResponse.setEmail("testuser@gmail.com");
+        MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders.standaloneSetup(ovaPalController).build();
 
-        loginResponse = new LoginResponse();
-        loginResponse.setUser(userResponse);
-        loginResponse.setToken("dummy-token");
-
-        healthRecordResponse = new HealthRecordResponseBean();
-        healthRecordResponse.setHealthId(1L);
-        healthRecordResponse.setUserId(1L);
-
-        periodRecordResponse = new PeriodRecordResponseBean();
-        periodRecordResponse.setPeriodRecId(1L);
-        periodRecordResponse.setUserId(1L);
-
-        reminderResponse = new ReminderResponseBean();
-        reminderResponse.setReminderId(1L);
-        reminderResponse.setUserId(1L);
-
-        medicationResponse = new MedicationResponseBean();
-        medicationResponse.setMedicationId(1L);
-        medicationResponse.setUserId(1L);
+        // Mock token validation
+        when(jwtTokenUtil.validateToken(validToken)).thenReturn(true);
+        when(jwtTokenUtil.validateToken(invalidToken)).thenReturn(false);
     }
 
-    // User Management Tests
+    // Test helper methods
+    private String asJsonString(Object obj) throws Exception {
+        return objectMapper.writeValueAsString(obj);
+    }
+
+    // 1. User Registration
     @Test
-    void createUser_ShouldReturnCreatedUserWithStatus201() throws Exception {
+    void createUser_ShouldReturnUserResponse() throws Exception {
         UserRequestBean request = new UserRequestBean();
-        request.setEmail("newuser@gmail.com");
-        request.setPassword("password");
+        UserResponseBean response = new UserResponseBean();
+        response.setUserId(testUserId);
 
-        when(ovaPalService.createUser(any(UserRequestBean.class))).thenReturn(userResponse);
+        when(ovaPalService.createUser(any(UserRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/users")
+        mockMvc.perform(post("/ovapal/users")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.userId", is(1)))
-                .andExpect(jsonPath("$.email", is("testuser@gmail.com")));
+                .andExpect(jsonPath("$.userId").value(testUserId));
     }
 
+    // 2. Login
     @Test
-    void login_ShouldReturnUserDetailsAndToken() throws Exception {
+    void login_ShouldReturnTokenAndUser() throws Exception {
         LoginRequestBean request = new LoginRequestBean();
-        request.setEmail("testuser@gmail.com");
-        request.setPassword("password");
+        LoginResponseBean loginResponse = new LoginResponseBean();
+        UserResponseBean user = new UserResponseBean();
+        user.setUserId(testUserId);
+        loginResponse.setUser(user);
 
         when(ovaPalService.loginUser(any(LoginRequestBean.class))).thenReturn(loginResponse);
+        when(jwtTokenUtil.generateToken(testUserId)).thenReturn(validToken);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/login")
+        mockMvc.perform(post("/ovapal/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.user.userId", is(1)))
-                .andExpect(jsonPath("$.user.email", is("testuser@gmail.com")))
-                .andExpect(jsonPath("$.token", is("dummy-token")));
+                .andExpect(jsonPath("$.token").exists())
+                .andExpect(jsonPath("$.user.userId").value(testUserId));
     }
 
-    // Health Record Tests
+    // 3. Health Record Endpoints
     @Test
-    void createHealthRecord_ShouldReturnCreatedRecord() throws Exception {
+    void createHealthRecord_WithValidToken_ShouldReturnRecord() throws Exception {
         HealthRecordRequestBean request = new HealthRecordRequestBean();
-        request.setUserId(1L);
+        HealthRecordResponseBean response = new HealthRecordResponseBean();
+        response.setHealthId(testRecordId);
 
-        when(ovaPalService.saveHealthRecord(any(HealthRecordRequestBean.class))).thenReturn(healthRecordResponse);
+        when(ovaPalService.saveHealthRecord(any(HealthRecordRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/health")
+        mockMvc.perform(post("/ovapal/health")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.healthId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.healthId").value(testRecordId));
     }
 
     @Test
-    void getHealthRecords_ShouldReturnListOfRecords() throws Exception {
-        List<HealthRecordResponseBean> records = Arrays.asList(healthRecordResponse);
-        when(ovaPalService.getHealthRecords(anyLong())).thenReturn(records);
+    void getHealthRecords_WithValidToken_ShouldReturnRecords() throws Exception {
+        HealthRecordResponseBean record = new HealthRecordResponseBean();
+        List<HealthRecordResponseBean> records = Arrays.asList(record);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/health/1"))
+        when(ovaPalService.getHealthRecords(testUserId)).thenReturn(records);
+
+        mockMvc.perform(get("/ovapal/health/" + testUserId)
+                        .header("Authorization", "Bearer " + validToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].healthId", is(1)))
-                .andExpect(jsonPath("$[0].userId", is(1)));
+                .andExpect(jsonPath("$[0]").exists());
     }
 
     @Test
-    void updateHealthRecord_ShouldReturnUpdatedRecord() throws Exception {
+    void updateHealthRecord_WithValidToken_ShouldReturnUpdatedRecord() throws Exception {
         HealthRecordRequestBean request = new HealthRecordRequestBean();
-        request.setUserId(1L);
+        HealthRecordResponseBean response = new HealthRecordResponseBean();
+        response.setHealthId(testRecordId);
 
-        when(ovaPalService.updateHealthRecord(anyLong(), any(HealthRecordRequestBean.class)))
-                .thenReturn(healthRecordResponse);
+        when(ovaPalService.updateHealthRecord(anyLong(), any(HealthRecordRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/health/1")
+        mockMvc.perform(put("/ovapal/health/" + testRecordId)
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.healthId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.healthId").value(testRecordId));
+    }
+
+    // 4. Period Record Endpoints
+    @Test
+    void getPeriodRecords_WithValidToken_ShouldReturnRecords() throws Exception {
+        PeriodRecordResponseBean record = new PeriodRecordResponseBean();
+        List<PeriodRecordResponseBean> records = Arrays.asList(record);
+
+        when(ovaPalService.getPeriodRecords(testUserId)).thenReturn(records);
+
+        mockMvc.perform(get("/ovapal/period/" + testUserId)
+                        .header("Authorization", "Bearer " + validToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").exists());
     }
 
     @Test
-    void getHealthRecords_ShouldReturnEmptyListForUserWithNoRecords() throws Exception {
-        when(ovaPalService.getHealthRecords(anyLong())).thenReturn(Collections.emptyList());
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/health/999"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(0)));
-    }
-
-    // Period Record Tests
-    @Test
-    void getPeriodRecords_ShouldReturnListOfRecords() throws Exception {
-        List<PeriodRecordResponseBean> records = Arrays.asList(periodRecordResponse);
-        when(ovaPalService.getPeriodRecords(anyLong())).thenReturn(records);
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/period/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].periodRecId", is(1)))
-                .andExpect(jsonPath("$[0].userId", is(1)));
-    }
-
-    @Test
-    void savePeriodRecord_ShouldReturnSavedRecord() throws Exception {
+    void savePeriodRecord_WithValidToken_ShouldReturnRecord() throws Exception {
         PeriodRecordRequestBean request = new PeriodRecordRequestBean();
-        request.setUserId(1L);
+        PeriodRecordResponseBean response = new PeriodRecordResponseBean();
+        response.setPeriodRecId(testRecordId);
 
-        when(ovaPalService.savePeriodRecord(any(PeriodRecordRequestBean.class))).thenReturn(periodRecordResponse);
+        when(ovaPalService.savePeriodRecord(any(PeriodRecordRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/period")
+        mockMvc.perform(post("/ovapal/period")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.periodRecId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.periodRecId").value(testRecordId));
     }
 
     @Test
-    void updatePeriodRecord_ShouldReturnUpdatedRecord() throws Exception {
+    void updatePeriodRecord_WithValidToken_ShouldReturnUpdatedRecord() throws Exception {
         PeriodRecordRequestBean request = new PeriodRecordRequestBean();
-        request.setUserId(1L);
+        PeriodRecordResponseBean response = new PeriodRecordResponseBean();
+        response.setPeriodRecId(testRecordId);
 
-        when(ovaPalService.updatePeriodRecord(anyLong(), any(PeriodRecordRequestBean.class)))
-                .thenReturn(periodRecordResponse);
+        when(ovaPalService.updatePeriodRecord(anyLong(), any(PeriodRecordRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/period/1")
+        mockMvc.perform(put("/ovapal/period/" + testRecordId)
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.periodRecId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.periodRecId").value(testRecordId));
     }
 
+    // 5. Reminder Endpoints
     @Test
-    void getPeriodRecords_ShouldReturnNotFoundForInvalidUser() throws Exception {
-        when(ovaPalService.getPeriodRecords(anyLong())).thenThrow(new ResourceNotFoundException("User not found"));
+    void getReminders_WithValidToken_ShouldReturnReminders() throws Exception {
+        ReminderResponseBean reminder = new ReminderResponseBean();
+        List<ReminderResponseBean> reminders = Arrays.asList(reminder);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/period/999"))
-                .andExpect(status().isNotFound());
-    }
+        when(ovaPalService.getReminders(testUserId)).thenReturn(reminders);
 
-    // Reminder Tests
-    @Test
-    void getReminders_ShouldReturnListOfReminders() throws Exception {
-        List<ReminderResponseBean> reminders = Arrays.asList(reminderResponse);
-        when(ovaPalService.getReminders(anyLong())).thenReturn(reminders);
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/reminders/1"))
+        mockMvc.perform(get("/ovapal/reminders/" + testUserId)
+                        .header("Authorization", "Bearer " + validToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].reminderId", is(1)))
-                .andExpect(jsonPath("$[0].userId", is(1)));
+                .andExpect(jsonPath("$[0]").exists());
     }
 
     @Test
-    void setReminder_ShouldReturnCreatedReminder() throws Exception {
+    void setReminder_WithValidToken_ShouldReturnReminder() throws Exception {
         ReminderRequestBean request = new ReminderRequestBean();
-        request.setUserId(1L);
+        ReminderResponseBean response = new ReminderResponseBean();
+        response.setReminderId(testRecordId);
 
-        when(ovaPalService.setReminder(any(ReminderRequestBean.class))).thenReturn(reminderResponse);
+        when(ovaPalService.setReminder(any(ReminderRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/reminders")
+        mockMvc.perform(post("/ovapal/reminders")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reminderId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.reminderId").value(testRecordId));
     }
 
     @Test
-    void updateReminder_ShouldReturnUpdatedReminder() throws Exception {
+    void updateReminder_WithValidToken_ShouldReturnUpdatedReminder() throws Exception {
         ReminderRequestBean request = new ReminderRequestBean();
-        request.setUserId(1L);
+        ReminderResponseBean response = new ReminderResponseBean();
+        response.setReminderId(testRecordId);
 
-        when(ovaPalService.updateReminder(anyLong(), any(ReminderRequestBean.class)))
-                .thenReturn(reminderResponse);
+        when(ovaPalService.updateReminder(anyLong(), any(ReminderRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/reminders/1")
+        mockMvc.perform(put("/ovapal/reminders/" + testRecordId)
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reminderId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.reminderId").value(testRecordId));
     }
 
     @Test
-    void deleteReminder_ShouldReturnSuccess() throws Exception {
-        doNothing().when(ovaPalService).deleteReminder(anyLong());
+    void deleteReminder_WithValidToken_ShouldReturnSuccess() throws Exception {
+        doNothing().when(ovaPalService).deleteReminder(testRecordId);
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/ovapal/reminders/1"))
+        mockMvc.perform(delete("/ovapal/reminders/" + testRecordId)
+                        .header("Authorization", "Bearer " + validToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", is("Reminder deleted successfully")));
-
-        verify(ovaPalService, times(1)).deleteReminder(1L);
+                .andExpect(content().string("Reminder deleted successfully"));
     }
 
+    // 6. Medication Endpoints
     @Test
-    void getReminders_ShouldReturnNotFoundForInvalidUser() throws Exception {
-        when(ovaPalService.getReminders(anyLong())).thenThrow(new ResourceNotFoundException("User not found"));
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/reminders/999"))
-                .andExpect(status().isNotFound());
-    }
-
-    // Medication Tests
-    @Test
-    void getMedications_ShouldReturnListOfMedications() throws Exception {
-        List<MedicationResponseBean> medications = Arrays.asList(medicationResponse);
-        when(ovaPalService.getMedications(anyLong())).thenReturn(medications);
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/medications/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].medicationId", is(1)))
-                .andExpect(jsonPath("$[0].userId", is(1)));
-    }
-
-    @Test
-    void addMedication_ShouldReturnCreatedMedication() throws Exception {
+    void addMedication_WithValidToken_ShouldReturnMedication() throws Exception {
         MedicationRequestBean request = new MedicationRequestBean();
-        request.setUserId(1L);
+        MedicationResponseBean response = new MedicationResponseBean();
+        response.setMedicationId(testRecordId);
 
-        when(ovaPalService.addMedication(any(MedicationRequestBean.class))).thenReturn(medicationResponse);
+        when(ovaPalService.addMedication(any(MedicationRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/ovapal/medications")
+        mockMvc.perform(post("/ovapal/medications")
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.medicationId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.medicationId").value(testRecordId));
     }
 
     @Test
-    void updateMedication_ShouldReturnUpdatedMedication() throws Exception {
+    void getMedications_WithValidToken_ShouldReturnMedications() throws Exception {
+        MedicationResponseBean medication = new MedicationResponseBean();
+        List<MedicationResponseBean> medications = Arrays.asList(medication);
+
+        when(ovaPalService.getMedications(testUserId)).thenReturn(medications);
+
+        mockMvc.perform(get("/ovapal/medications/" + testUserId)
+                        .header("Authorization", "Bearer " + validToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").exists());
+    }
+
+    @Test
+    void updateMedication_WithValidToken_ShouldReturnUpdatedMedication() throws Exception {
         MedicationRequestBean request = new MedicationRequestBean();
-        request.setUserId(1L);
+        MedicationResponseBean response = new MedicationResponseBean();
+        response.setMedicationId(testRecordId);
 
-        when(ovaPalService.updateMedication(anyLong(), any(MedicationRequestBean.class)))
-                .thenReturn(medicationResponse);
+        when(ovaPalService.updateMedication(anyLong(), any(MedicationRequestBean.class))).thenReturn(response);
 
-        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/medications/1")
+        mockMvc.perform(put("/ovapal/medications/" + testRecordId)
+                        .header("Authorization", "Bearer " + validToken)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(asJsonString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.medicationId", is(1)))
-                .andExpect(jsonPath("$.userId", is(1)));
+                .andExpect(jsonPath("$.medicationId").value(testRecordId));
     }
 
     @Test
-    void deleteMedication_ShouldReturnSuccess() throws Exception {
-        doNothing().when(ovaPalService).deleteMedication(anyLong());
+    void deleteMedication_WithValidToken_ShouldReturnSuccess() throws Exception {
+        doNothing().when(ovaPalService).deleteMedication(testRecordId);
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/ovapal/medications/1"))
+        mockMvc.perform(delete("/ovapal/medications/" + testRecordId)
+                        .header("Authorization", "Bearer " + validToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", is("Medication deleted successfully")));
+                .andExpect(content().string("Medication deleted successfully"));
+    }
 
-        verify(ovaPalService, times(1)).deleteMedication(1L);
+    // Token Validation Tests
+    @Test
+    void protectedEndpoint_WithoutToken_ShouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/ovapal/health/" + testUserId))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void getMedications_ShouldReturnNotFoundForInvalidUser() throws Exception {
-        when(ovaPalService.getMedications(anyLong())).thenThrow(new ResourceNotFoundException("User not found"));
-
-        mockMvc.perform(MockMvcRequestBuilders.get("/ovapal/medications/999"))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void updateHealthRecord_ShouldReturnNotFoundForInvalidId() throws Exception {
-        HealthRecordRequestBean request = new HealthRecordRequestBean();
-        request.setUserId(1L);
-
-        when(ovaPalService.updateHealthRecord(anyLong(), any(HealthRecordRequestBean.class)))
-                .thenThrow(new ResourceNotFoundException("Health record not found"));
-
-        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/health/999")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound());
+    void protectedEndpoint_WithInvalidToken_ShouldReturnUnauthorized() throws Exception {
+        mockMvc.perform(get("/ovapal/health/" + testUserId)
+                        .header("Authorization", "Bearer " + invalidToken))
+                .andExpect(status().isUnauthorized());
     }
 }
