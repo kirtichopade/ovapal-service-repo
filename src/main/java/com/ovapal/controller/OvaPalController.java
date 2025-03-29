@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/ovapal")
+@CrossOrigin(origins = "http://localhost:3000")
 public class OvaPalController {
     
     @Autowired
@@ -70,13 +71,38 @@ public class OvaPalController {
         return ResponseEntity.ok(ovaPalService.setReminder(reminderRequestBean));
     }
 
+    @PutMapping("/reminders/{reminderId}")
+    public ResponseEntity<ReminderResponseBean> updateReminder(
+            @PathVariable Long reminderId,
+            @RequestBody ReminderRequestBean reminderRequestBean) {
+        return ResponseEntity.ok(ovaPalService.updateReminder(reminderId, reminderRequestBean));
+    }
+
     @PostMapping("/medications")
     public ResponseEntity<MedicationResponseBean> addMedication(@RequestBody MedicationRequestBean medicationRequestBean) {
         return ResponseEntity.ok(ovaPalService.addMedication(medicationRequestBean));
+    }
+    @PutMapping("/medications/{medicationId}")
+    public ResponseEntity<MedicationResponseBean> updateMedication(
+            @PathVariable Long medicationId,
+            @RequestBody MedicationRequestBean medicationRequestBean) {
+        return ResponseEntity.ok(ovaPalService.updateMedication(medicationId, medicationRequestBean));
     }
 
     @GetMapping("/medications/{userId}")
     public ResponseEntity<List<MedicationResponseBean>> getMedications(@PathVariable Long userId) {
         return ResponseEntity.ok(ovaPalService.getMedications(userId));
+    }
+
+    @DeleteMapping("/reminders/{reminderId}")
+    public ResponseEntity<String> deleteReminder(@PathVariable Long reminderId) {
+        ovaPalService.deleteReminder(reminderId);
+        return ResponseEntity.ok("Reminder deleted successfully");
+    }
+
+    @DeleteMapping("/medications/{medicationId}")
+    public ResponseEntity<String> deleteMedication(@PathVariable Long medicationId) {
+        ovaPalService.deleteMedication(medicationId);
+        return ResponseEntity.ok("Medication deleted successfully");
     }
 } 

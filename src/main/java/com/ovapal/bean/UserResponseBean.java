@@ -13,6 +13,5 @@ public class UserResponseBean {
     private Long userId;
     private String name;
     private String email;
-    // password is deliberately excluded from response
     private Integer age;
 } 

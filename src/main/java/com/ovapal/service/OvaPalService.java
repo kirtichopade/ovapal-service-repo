@@ -365,7 +365,7 @@ public class OvaPalService {
         }
     }
     
-    private void validateHealthRecord(HealthRecord healthRecord) {
+    void validateHealthRecord(HealthRecord healthRecord) {
         if (healthRecord.getWeight() != null && healthRecord.getWeight() <= 0) {
             throw new InvalidOperationException("Weight must be a positive value");
         }
@@ -385,7 +385,7 @@ public class OvaPalService {
         }
     }
     
-    private void validatePeriodRecord(PeriodRecord periodRecord) {
+    void validatePeriodRecord(PeriodRecord periodRecord) {
         if (periodRecord.getStartDate() == null) {
             throw new InvalidOperationException("Start date is required");
         }
@@ -527,7 +527,6 @@ public class OvaPalService {
             throw new InvalidOperationException("Health record doesn't belong to this user");
         }
 
-        // Business logic
         HealthRecord healthRecord = getHealthRecord(request);
         validateHealthRecord(healthRecord);
 
@@ -535,5 +534,110 @@ public class OvaPalService {
         logger.info("Updated health record with ID: {}", updatedRecord.getHealthId());
 
         return mapHealthRecordToResponseBean(updatedRecord);
+    }
+
+    @Transactional
+    public ReminderResponseBean updateReminder(Long reminderId, ReminderRequestBean reminderRequestBean) {
+        logger.info("Updating reminder ID: {} for user ID: {}", reminderId, reminderRequestBean.getUserId());
+
+        // Verify user exists
+        verifyUserExists(reminderRequestBean.getUserId());
+
+        // Verify reminder exists and belongs to the user
+        Reminder existingReminder = reminderRepository.findById(reminderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Reminder not found with ID: " + reminderId));
+
+        if (!existingReminder.getUserId().equals(reminderRequestBean.getUserId())) {
+            logger.error("User ID mismatch for reminder ID: {}", reminderId);
+            throw new InvalidOperationException("Reminder does not belong to this user");
+        }
+
+        // Map bean to entity
+        Reminder reminder = Reminder.builder()
+                .reminderid(reminderId) // Set ID to ensure update
+                .userId(reminderRequestBean.getUserId())
+                .title(reminderRequestBean.getTitle())
+                .description(reminderRequestBean.getDescription())
+                .reminderDate(reminderRequestBean.getReminderDate())
+                .reminderTime(reminderRequestBean.getReminderTime())
+                .isRepeating(reminderRequestBean.getIsRepeating())
+                .repeatFrequency(reminderRequestBean.getRepeatFrequency())
+                .isActive(reminderRequestBean.getIsActive())
+                .build();
+
+        // Validate reminder
+        validateReminder(reminder);
+
+        Reminder updatedReminder = reminderRepository.save(reminder);
+        logger.info("Reminder updated with ID: {}", updatedReminder.getReminderid());
+
+        return mapReminderToResponseBean(updatedReminder);
+    }
+
+    @Transactional
+    public void deleteReminder(Long reminderId) {
+        logger.info("Deleting reminder ID: {}", reminderId);
+
+        // Verify reminder exists
+        if (!reminderRepository.existsById(reminderId)) {
+            logger.error("Reminder not found with ID: {}", reminderId);
+            throw new ResourceNotFoundException("Reminder not found with ID: " + reminderId);
+        }
+
+        // Soft delete (set isActive=false)
+        reminderRepository.findById(reminderId).ifPresent(reminder -> {
+            reminder.setIsActive(false);
+            reminderRepository.save(reminder);
+            logger.info("Soft-deleted reminder ID: {}", reminderId);
+        });
+    }
+    @Transactional
+    public MedicationResponseBean updateMedication(Long medicationId, MedicationRequestBean medicationRequestBean) {
+        logger.info("Updating medication ID: {} for user ID: {}", medicationId, medicationRequestBean.getUserId());
+
+        // Verify user exists
+        verifyUserExists(medicationRequestBean.getUserId());
+
+        // Verify medication exists and belongs to the user
+        Medication existingMedication = medicationRepository.findById(medicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Medication not found with ID: " + medicationId));
+
+        if (!existingMedication.getUserId().equals(medicationRequestBean.getUserId())) {
+            logger.error("User ID mismatch for medication ID: {}", medicationId);
+            throw new InvalidOperationException("Medication does not belong to this user");
+        }
+
+        // Map bean to entity
+        Medication medication = Medication.builder()
+                .medicineid(medicationId) // Set ID to ensure update
+                .userId(medicationRequestBean.getUserId())
+                .medicine(medicationRequestBean.getMedicine())
+                .dosage(medicationRequestBean.getDosage())
+                .frequency(medicationRequestBean.getFrequency())
+                .startDate(medicationRequestBean.getStartDate())
+                .endDate(medicationRequestBean.getEndDate())
+                .notes(medicationRequestBean.getNotes())
+                .build();
+
+        // Validate medication
+        validateMedication(medication);
+
+        Medication updatedMedication = medicationRepository.save(medication);
+        logger.info("Medication updated with ID: {}", updatedMedication.getMedicineid());
+
+        return mapMedicationToResponseBean(updatedMedication);
+    }
+
+    @Transactional
+    public void deleteMedication(Long medicationId) {
+        logger.info("Deleting medication ID: {}", medicationId);
+
+        // Verify medication exists
+        if (!medicationRepository.existsById(medicationId)) {
+            logger.error("Medication not found with ID: {}", medicationId);
+            throw new ResourceNotFoundException("Medication not found with ID: " + medicationId);
+        }
+        medicationRepository.deleteById(medicationId);
+        logger.info("Deleted medication ID: {}", medicationId);
     }
 } 

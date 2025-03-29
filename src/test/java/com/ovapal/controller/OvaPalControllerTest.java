@@ -19,7 +19,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -185,6 +185,33 @@ class OvaPalControllerIntegrationTest {
                 .andExpect(jsonPath("$.userId", is(1)));
     }
 
+    @Test
+    void updateReminder_ShouldReturnUpdatedReminder() throws Exception {
+        ReminderRequestBean request = new ReminderRequestBean();
+        request.setUserId(1L);
+
+        when(ovaPalService.updateReminder(anyLong(), any(ReminderRequestBean.class)))
+                .thenReturn(reminderResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/reminders/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reminderId", is(1)))
+                .andExpect(jsonPath("$.userId", is(1)));
+    }
+
+    @Test
+    void deleteReminder_ShouldReturnSuccess() throws Exception {
+        doNothing().when(ovaPalService).deleteReminder(anyLong());
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/ovapal/reminders/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is("Reminder deleted successfully")));
+
+        verify(ovaPalService, times(1)).deleteReminder(1L);
+    }
+
     // Medication Tests
     @Test
     void getMedications_ShouldReturnListOfMedications() throws Exception {
@@ -213,6 +240,33 @@ class OvaPalControllerIntegrationTest {
                 .andExpect(jsonPath("$.userId", is(1)));
     }
 
+    @Test
+    void updateMedication_ShouldReturnUpdatedMedication() throws Exception {
+        MedicationRequestBean request = new MedicationRequestBean();
+        request.setUserId(1L);
+
+        when(ovaPalService.updateMedication(anyLong(), any(MedicationRequestBean.class)))
+                .thenReturn(medicationResponse);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/ovapal/medications/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.medicationId", is(1)))
+                .andExpect(jsonPath("$.userId", is(1)));
+    }
+
+    @Test
+    void deleteMedication_ShouldReturnSuccess() throws Exception {
+        doNothing().when(ovaPalService).deleteMedication(anyLong());
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/ovapal/medications/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", is("Medication deleted successfully")));
+
+        verify(ovaPalService, times(1)).deleteMedication(1L);
+    }
+
     // Error Scenario Tests
     @Test
     void getHealthRecords_ShouldReturnNotFoundForInvalidUser() throws Exception {
@@ -222,5 +276,4 @@ class OvaPalControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(0)));
     }
-
 }
